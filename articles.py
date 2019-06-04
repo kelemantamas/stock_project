@@ -109,13 +109,6 @@ def getActualArticlesPerDay(articles):
     return orderedDict
 
 
-def isArticleTalkingAboutCompany(company, article_text):
-    if (company + " ") in article_text:
-        return True
-    else:
-        return False
-
-
 def getArticleTalkingAboutCompany(company_symbol):
     articles_with_comps = []
     companies = getCompanies()
@@ -196,31 +189,30 @@ def getArticleCountTalkingAboutCompany(company_symbol):
 def diagramForCompany(day_count_dict, symbol):
     dates = []
     counted = []
+
     for key, value in day_count_dict.iteritems():
-        dates.append(key)
-        counted.append(value)
-    fig, ax = plt.subplots(figsize=(16, 10), dpi=100)
-    plt.plot(dates, counted, 'k', label='Average Price')
+        if key != "undefined date":
+            dates.append(key)
+            counted.append(value)
+
+    pd.to_datetime(dates)
+    fig, ax = plt.subplots(figsize=(16, 10), dpi=80)
+    plt.plot(dates, counted, 'r', marker="o", linestyle="", label="Number of articles per day")
     plt.legend(loc='upper center')
-    ax.set(xlabel='Date', ylabel='Nr. of articles',
-           title='Articles per day %s' % symbol)
+    ax.set(xlabel='Date', ylabel='Nr. of articles', title='Articles per day %s' % symbol)
     plt.grid()
+    plt.xticks(rotation=45)
     plt.show()
 
 
+def main():
+    result = getActualArticlesPerDay(getArticleTalkingAboutCompany("AAPL"))
+
+    diagramForCompany(result, "AAPL")
+
+
 start_time = time.time()
-# getAtricleCountPerDomain()
-# getAtricleCountPerFeed()
-# getArticlesPerDay()
-# comps = getCompanies()
-#
-# for key, value in comps.iteritems():
-#     print key, ' - ', getArticleCountTalkingAboutCompany(key)
-#
-# print getArticleCountTalkingAboutCompany("MSFT")
 
-result = getActualArticlesPerDay(getArticleTalkingAboutCompany("MSFT"))
-
-diagramForCompany(result, "MSFT")
+main()
 
 print "Took: %s s" % (time.time() - start_time)
