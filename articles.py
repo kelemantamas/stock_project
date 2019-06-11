@@ -4,10 +4,23 @@ import datetime
 import collections
 import pandas as pd
 import time
+# import string
 import matplotlib.pyplot as plt
 
 with open(config.json_file) as f:
-    data = json.load(f)
+    raw_datag = json.load(f)
+
+# remove multiple lines, checking by link cause it is unique
+temp_dict = {raw_datag[0]['link']: raw_datag[0]}
+for ig in range(1, len(raw_datag)):
+    linkg = raw_datag[ig]['link']
+    if linkg not in temp_dict:
+        temp_dict[linkg] = raw_datag[ig]
+
+# data is the new list with the no multipled articles
+data = []
+for keyg, valueg in temp_dict.items():
+    data.append(valueg)
 
 
 class Articles:
@@ -114,8 +127,12 @@ def getArticleTalkingAboutCompany(company_symbol):
     companies = getCompanies()
     for i in range(0, len(data)):
         msg = data[i]['message']
+        # msg = str(msg.encode('utf-8'))
+        # msg = msg.translate(string.maketrans("\n\t\r", "   "))
         try:
             txt = data[i]['full-text']
+            # txt = str(txt.encode('utf-8'))
+            # txt = txt.translate(string.maketrans("\n\t\r", "   "))
         except Exception:
             txt = "No full-text field"
         srch = 'NASDAQ: {0} '.format(company_symbol)
@@ -128,65 +145,23 @@ def getArticleTalkingAboutCompany(company_symbol):
 
         for company in companies[company_symbol]:
             if (company + " ") in txt.encode('utf-8'):
+                # if (company + " ") in txt:
                 articles_with_comps.append(data[i])
                 break
             if (company + " ") in msg.encode('utf-8'):
+                # if (company + " ") in msg:
                 articles_with_comps.append(data[i])
                 break
-        # for key, subsidiaries in comps.iteritems():
-        #     srch = '(NASDAQ: {0})'.format(key)
-        #     # if re.search(srch, txt, re.IGNORECASE):
-        #     if srch in txt:
-        #         print key, " in full-text:"
-        #         print '\n', txt
-        #         print '\n', ' - - - - - - - - - - ', '\n'
-        #         continue
-        #     if srch in msg:
-        #         print key, " in message field:"
-        #         print '\n', msg
-        #         print '\n', ' - - - - - - - - - - ', '\n'
-        #         continue
-        #     for subsidiary in subsidiaries:
-        #         if (subsidiary + " ") in txt.encode('utf-8'):
-        #             print key, ' - ', subsidiary, " in full-text: \n", txt
-        #             print '\n', ' - - - - - - - - - - ', '\n'
-        #             break
-        #         if (subsidiary + " ") in msg.encode('utf-8'):
-        #             print key, ' - ', subsidiary, " in message field: \n", msg
-        #             print '\n', ' - - - - - - - - - - ', '\n'
-        #             break
+
     return articles_with_comps
 
 
 def getArticleCountTalkingAboutCompany(company_symbol):
-    companies = getCompanies()
-    count = 0
-    for i in range(0, len(data)):
-        msg = data[i]['message']
-        try:
-            txt = data[i]['full-text']
-        except Exception:
-            txt = "No full-text field"
-        srch_for_key = 'NASDAQ: {0} '.format(company_symbol)
-
-        if srch_for_key in txt:
-            count += 1
-            continue
-        if srch_for_key in msg:
-            count += 1
-            continue
-
-        for company in companies[company_symbol]:
-            if (company + " ") in txt.encode('utf-8'):
-                count += 1
-                break
-            if (company + " ") in msg.encode('utf-8'):
-                count += 1
-                break
-    return count
+    return len(getArticleTalkingAboutCompany(company_symbol))
 
 
-def diagramForCompany(day_count_dict, symbol):
+def diagramForCompany(symbol):
+    day_count_dict = getActualArticlesPerDay(getArticleTalkingAboutCompany(symbol))
     dates = []
     counted = []
 
@@ -206,13 +181,23 @@ def diagramForCompany(day_count_dict, symbol):
 
 
 def main():
-    result = getActualArticlesPerDay(getArticleTalkingAboutCompany("AAPL"))
+    start_time = time.time()
+    proba = getArticleTalkingAboutCompany("MSFT")
+    lista = []
+    for element in proba:
+        lista.append(element['link'])
+    lista.sort()
+    for element in lista:
+        print element
+    print getArticleCountTalkingAboutCompany("MSFT")
 
-    diagramForCompany(result, "AAPL")
+    diagramForCompany("MSFT")
+
+    # for e in proba:
+    #     print e['full-text']
+    # print len(proba)
+    # diagramForCompany("MSFT")
+    print "Took: %s s" % (time.time() - start_time)
 
 
-start_time = time.time()
-
-main()
-
-print "Took: %s s" % (time.time() - start_time)
+# main()
